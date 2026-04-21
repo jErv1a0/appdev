@@ -1,3 +1,7 @@
+/// <reference types="nativewind/types" />
+
+declare module '*.css';
+
 declare module '@env' {
   export const APP_ENV: string | undefined;
   export const APP_DEBUG: string | undefined;
