@@ -1,133 +1,253 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+StayGrid 
+> **Smart Stays, Stay Grid.**
 
-# Getting Started
+A full-stack room booking and accommodation platform built with **Symfony PHP** on the backend and **React Native (TypeScript)** on mobile. StayGrid allows users to browse available rooms, create bookings, track reservations, and manage their profiles — all from a unified mobile experience powered by a shared REST API.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 📱 App Screenshots
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+| Launch | Home | Browse Rooms | Booking | Reservations | Profile |
+|--------|------|--------------|---------|--------------|---------|
+| Smart Stays splash screen | Featured room listings | Available units with real-time status | Availability calendar with date selection | Transaction logs and personal calendar | Profile, GPS location, and spending stats |
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
 
-```sh
-# Using npm
-npm start
+Tech Stack
 
-# OR using Yarn
-yarn start
+### Mobile — React Native (TypeScript)
+| Package | Purpose |
+|---|---|
+| `react-native` 0.76.5 | Core mobile framework |
+| `@react-navigation/native` | Screen navigation |
+| `@react-navigation/native-stack` | Stack navigator |
+| `axios` | HTTP client for API calls |
+| `@reduxjs/toolkit` + `redux-saga` | State management |
+| `react-redux` | Redux bindings |
+| `nativewind` + `tailwindcss` | Utility-first styling |
+| `@react-native-async-storage/async-storage` | JWT token persistence |
+| `@react-native-google-signin/google-signin` | Google OAuth |
+| `react-native-vector-icons` | Icon library |
+| `firebase` | Authentication provider |
+
+Backend — Symfony PHP
+| Component | Purpose |
+|---|---|
+| Symfony 7.3 | PHP web framework |
+| API Platform | REST API generation |
+| Doctrine ORM | Database abstraction |
+| JWT Authentication | Stateless API auth |
+| Cloudinary | Permanent image storage |
+| Railway | Cloud deployment |
+| PostgreSQL | Production database |
+
+---
+
+## 🗂️ Project Structure
+
+```
+StayGrid/                          # React Native app
+├── SRC/
+│   ├── api/
+│   │   ├── client.ts              # Axios instance with JWT interceptor
+│   │   ├── listingsApi.ts         # Rooms API calls
+│   │   └── authApi.ts             # Login / register calls
+│   ├── screens/
+│   │   ├── HomeScreen.tsx         # Featured rooms dashboard
+│   │   ├── RoomListingScreen.tsx  # Browse all rooms
+│   │   ├── BookingScreen.tsx      # Booking with availability calendar
+│   │   ├── ReservationsScreen.tsx # Transaction logs
+│   │   └── ProfileScreen.tsx      # User profile + GPS
+│   ├── store/
+│   │   ├── listings/              # Rooms redux state
+│   │   └── auth/                  # Auth redux state
+│   └── components/                # Shared UI components
+├── android/                       # Android native project
+└── package.json
+
+staygrid/ (Symfony backend)        # Web app + API
+├── src/
+│   ├── Controller/
+│   │   ├── Api/
+│   │   │   └── AuthApiController.php   # JWT login/register
+│   │   ├── Admin/
+│   │   │   └── RoomListingController.php
+│   │   └── Staff/
+│   │       └── RoomListingController.php
+│   ├── Entity/
+│   │   ├── RoomListing.php        # Room entity
+│   │   ├── Booking.php            # Booking entity
+│   │   └── LogInUsers.php         # User entity
+│   ├── Security/
+│   │   └── ApiTokenAuthenticator.php
+│   └── Service/
+│       └── CloudinaryService.php  # Image upload to Cloudinary
+├── config/
+│   └── packages/
+│       └── security.yaml          # Firewall + JWT config
+└── composer.json
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+API Endpoints
 
-### Android
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/auth/login` | ❌ Public | Login, returns JWT token |
+| `POST` | `/api/auth/register` | ❌ Public | Register new user |
+| `GET` | `/api/rooms` | ❌ Public | List all available rooms |
+| `GET` | `/api/rooms/{id}` | ❌ Public | Single room detail |
+| `POST` | `/api/bookings` | ✅ JWT | Create a booking |
+| `GET` | `/api/bookings/my` | ✅ JWT | Get current user's bookings |
+| `DELETE` | `/api/bookings/{id}` | ✅ JWT | Cancel a booking |
+| `GET` | `/api/user/profile` | ✅ JWT | Get user profile |
+| `PUT` | `/api/user/profile` | ✅ JWT | Update user profile |
+| `POST` | `/api/feedback` | ❌ Public | Submit feedback |
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+All protected endpoints require:
+```
+Authorization: Bearer <jwt_token>
 ```
 
-### iOS
+---
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+Data Flow (Level 1 DFD)
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```
+User → [P1 Login/Register]   → POST /api/auth/login    → D1 Users
+User → [P2 Browse Rooms]     → GET  /api/rooms         → D2 Rooms + D6 Cloudinary
+User → [P3 View Room Detail] → GET  /api/rooms/{id}    → D3 Room Images
+User → [P4 Create Booking]   → POST /api/bookings      → D4 Bookings
+User → [P5 View Bookings]    → GET  /api/bookings/my   → D4 Bookings
+User → [P6 Manage Profile]   → GET/PUT /api/profile    → D1 Users
+User → [P7 Submit Feedback]  → POST /api/feedback      → D5 Feedback
 ```
 
-Then, and every time you update your native dependencies, run:
+---
 
-```sh
-bundle exec pod install
+Getting Started
+
+### Prerequisites
+- Node.js >= 22.11.0
+- PHP >= 8.2
+- Composer
+- Android Studio (for emulator)
+- Railway CLI (for deployment)
+
+---
+
+### React Native App Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/jErv1a0/StayGrid-App.git
+cd StayGrid
+
+# Install dependencies
+npm install
+
+# Start Metro bundler
+npx react-native start
+
+# Run on Android (in a separate terminal)
+npx react-native run-android
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+**Environment config** — update the base URL in `SRC/api/client.ts`:
+```ts
+const BASE_URL = 'https://staygrid.up.railway.app';
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Symfony Backend Setup
 
-## Step 3: Modify your app
+```bash
+cd staygrid
 
-Now that you have successfully run the app, let's make changes!
+# Install PHP dependencies
+composer install
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+# Copy environment file
+cp .env .env.local
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+# Set your database URL and Cloudinary credentials in .env.local
+DATABASE_URL="postgresql://user:pass@localhost:5432/staygrid"
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+# Run database migrations
+php bin/console doctrine:migrations:migrate
 
-## Congratulations! :tada:
+# Start local server
+symfony server:start
+```
 
-You've successfully run and modified your React Native App. :partying_face:
+---
 
-### Now what?
+Building a Release APK
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+```bash
+cd android
 
-# Troubleshooting
+# Generate signing keystore (first time only)
+keytool -genkeypair -v -storetype PKCS12 \
+  -keystore app/staygrid.keystore \
+  -alias staygrid -keyalg RSA -keysize 2048 -validity 10000
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+# Build release APK
+./gradlew assembleRelease
 
-# Learn More
+# APK output location:
+# android/app/build/outputs/apk/release/app-release.apk
 
-To learn more about React Native, take a look at the following resources:
+# Install on connected device
+adb install app/build/outputs/apk/release/app-release.apk
+```
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+---
 
-# Firebase Support (Optional)
+Deployment
 
-This repo is set up for Google OAuth sign-in without requiring Firebase Authentication.
+### Railway (Backend)
+```bash
+# Push to main branch — Railway auto-deploys
+git push origin main
 
-The current auth flow is:
+# Set environment variables on Railway dashboard:
+# DATABASE_URL, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+```
 
-React Native
-↓
-Google Sign-In
-↓
-Google ID Token
-↓
-Symfony API
-↓
-Verify token with Google
-↓
-Create/update user
-↓
-Issue your own JWT/API token
-↓
-Authenticated API requests
+Live API: **https://staygrid.up.railway.app**
 
-Firebase Auth is only necessary if you want Firebase to manage user sessions and identity. If your Symfony backend already issues JWTs and manages users, skip Firebase Auth and keep your existing backend auth flow.
+### Image Storage
+Room images are stored permanently on **Cloudinary** (not Railway filesystem) to survive redeployments.
 
-If you still want Firebase services configured:
+---
 
-1. Open [SRC/config/firebaseConfig.ts](SRC/config/firebaseConfig.ts)
-2. Replace every REPLACE_WITH_FIREBASE_* value with your Firebase project config
-3. Restart Metro (`npm start`) and rebuild the app
+Features
 
-Notes:
-- Firebase services are initialized in [SRC/config/firebase.ts](SRC/config/firebase.ts)
-- Entry-point bootstrap is loaded from [index.js](index.js)
-- `measurementId` is optional for React Native and is not required for Firebase readiness
-- For Google OAuth without Firebase Auth, send the Google ID token to Symfony and verify it server-side before issuing a JWT
+- 🔐 **JWT Authentication** — stateless API auth for mobile
+- 🛏️ **Room Browsing** — real-time availability with Cloudinary images
+- 📅 **Booking System** — date selection with availability calendar
+- 📋 **Reservation Tracking** — transaction logs with personal calendar
+- 👤 **User Profile** — editable profile with GPS location auto-detection
+- 💰 **Spending Stats** — total nights and spend tracker
+- 🔄 **Edit/Cancel Bookings** — CRUD on reservations before check-in date
+- 🌐 **Shared Backend** — one Symfony API serves both web and mobile
+
+---
+
+Author
+
+**Alvarico Jervine A.**
+- GitHub: [@jErv1a0](https://github.com/jErv1a0)
+- Email: alvrcoquiermv05@gmail.com
+
+---
+
+License
+
+This project is for academic and personal use.
