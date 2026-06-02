@@ -6,18 +6,22 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
+import { COLORS } from '../theme';
 import { RootState } from '../store/rootReducer';
 import { AppDispatch } from '../store/store';
 import {
   clearAuthNotices,
+  googleLoginRequest,
   registerRequest,
 } from '../store/auth/authReducer';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
+import ENV from '../config/env';
 
 export default function SignupScreen() {
   const navigation = useNavigation<any>();
@@ -26,15 +30,6 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const { loading, error, registrationSuccess } = useSelector((state: RootState) => state.auth);
-
-  useEffect(() => {
-    if (GoogleSignin) {
-      GoogleSignin.configure({
-        webClientId: 'YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com',
-        offlineAccess: true,
-      });
-    }
-  }, []);
 
   useEffect(() => {
     if (!error) {
@@ -64,203 +59,303 @@ export default function SignupScreen() {
     dispatch(registerRequest(email, password, fullName));
   };
 
+  const googleEnabled = Boolean(ENV.GOOGLE_CLIENT_ID && ENV.GOOGLE_CLIENT_ID.length > 0);
+
+  const onGooglePress = () => {
+    if (!googleEnabled) {
+      Alert.alert('Google Sign-In not configured', 'This build does not have a Google client ID configured.');
+      return;
+    }
+
+    dispatch(googleLoginRequest());
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create an account</Text>
-
-      <Text style={styles.body}>Create an account or sign in with social providers.</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Full Name"
-        value={fullName}
-        onChangeText={setFullName}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={onSignup}
-        disabled={loading}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
       >
-        <Text style={styles.buttonText}>{loading ? 'Working...' : 'Create account'}</Text>
-      </TouchableOpacity>
-
-      <View style={styles.oauthContainer}>
-        <TouchableOpacity
-          style={[styles.oauthButton, styles.oauthButtonGoogle]}
-          onPress={async () => {
-            try {
-              if (!GoogleSignin) {
-                Alert.alert('Error', 'Google Sign-In is unavailable');
-                return;
-              }
-
-              await GoogleSignin.hasPlayServices();
-              const response = await GoogleSignin.signIn();
-
-              if (response.type === 'success') {
-                Alert.alert('Google signed in', JSON.stringify(response.data.user.email));
-              } else if (response.type === 'cancelled') {
-                console.log('User cancelled');
-              }
-            } catch (error: any) {
-              const code = error?.code;
-              if (statusCodes && code === statusCodes.IN_PROGRESS) {
-                console.log('In Progress');
-              } else {
-                Alert.alert('Google Sign-In Error', error?.message || String(error));
-              }
-            }
-          }}
-        >
+        {/* App Logo Top Bar */}
+        <View style={styles.topBar}>
           <Image
-            source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2702/2702602.png' }}
-            style={styles.socialIcon}
+            source={require('../../photos/Textmark-yellow.png')}
+            style={styles.logo}
+            resizeMode="contain"
           />
-          <Text style={[styles.oauthText, styles.oauthTextGoogle]}>Google</Text>
-        </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity
-          style={[styles.oauthButton, styles.oauthButtonFacebook]}
-          onPress={async () => {
-            try {
-              if (!LoginManager || !AccessToken) {
-                Alert.alert('Error', 'Facebook SDK not available');
-                return;
-              }
-              const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
-              if (result.isCancelled) {
-                return Alert.alert('Facebook login cancelled');
-              }
-              const data = await AccessToken.getCurrentAccessToken();
-              if (!data) return Alert.alert('Facebook login failed');
-              Alert.alert('Facebook signed in', 'Success');
-            } catch (error: any) {
-              Alert.alert('Facebook Error', error?.message || 'Check Facebook App ID.');
-            }
-          }}
-        >
-          <Image
-            source={{ uri: 'https://cdn-icons-png.flaticon.com/512/733/733547.png' }}
-            style={styles.socialIcon}
-          />
-          <Text style={[styles.oauthText, styles.oauthTextFacebook]}>Facebook</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Protocol Visual Hero Card */}
+        <View style={styles.heroCard}>
+          <Text style={styles.protocolTag}>AUTHENTICATION PROTOCOL</Text>
+          <Text style={styles.heroTitle}>Sign up with Staygrid</Text>
+          <Text style={styles.heroSubtitle}>
+            Access your booking dashboard, saved stays, and instant room availability from one secure entry point.
+          </Text>
+        </View>
 
-      <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.linkText}>
-          Already have an account? <Text style={{fontWeight: '800'}}>Log In</Text>
-        </Text>
-      </TouchableOpacity>
-    </View>
+        {/* Main Application Interaction Card */}
+        <View style={styles.appCard}>
+          <Text style={styles.welcomeLabel}>WELCOME TO THE GRID</Text>
+          <Text style={styles.appTitle}>Initialize Session</Text>
+
+          {/* Form Fields Section */}
+          <View style={styles.formContainer}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Full Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="John Doe"
+                placeholderTextColor="#888888"
+                value={fullName}
+                onChangeText={setFullName}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Email Address</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your email"
+                placeholderTextColor="#888888"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Password</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your password"
+                placeholderTextColor="#888888"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
+          </View>
+
+          {/* Action Button */}
+          <TouchableOpacity
+            style={[styles.primaryButton, loading && styles.disabledState]}
+            onPress={onSignup}
+            disabled={loading}
+            activeOpacity={0.9}
+          >
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'INITIALIZING...' : 'SIGN IN'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Protocol Splitter Line */}
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Social Sign-In */}
+          <TouchableOpacity
+            style={[
+              styles.secondaryButton,
+              loading && styles.disabledState,
+              !googleEnabled && styles.googleDisabledState
+            ]}
+            onPress={onGooglePress}
+            disabled={loading || !googleEnabled}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.secondaryButtonText}>CONTINUE WITH GOOGLE</Text>
+          </TouchableOpacity>
+
+          {!googleEnabled && (
+            <Text style={styles.configurationWarning}>
+              Google Client Configuration Missing
+            </Text>
+          )}
+
+          {/* Tightly Bound Footer Link */}
+          <TouchableOpacity
+            style={styles.navigationLink}
+            onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.navigationLinkText}>
+              Already have an account? <Text style={styles.navigationLinkHighlight}>Log In</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8F7F4',
+  },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 32,
+  },
+  topBar: {
+    width: '100%',
+    paddingVertical: 12,
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  logo: {
+    width: 110,
+    height: 30,
+  },
+  heroCard: {
+    backgroundColor: COLORS.black,
+    borderRadius: 12,
     padding: 24,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    marginBottom: 16,
   },
-  title: {
-    fontSize: 26,
+  protocolTag: {
+    fontSize: 10,
     fontWeight: '700',
-    textAlign: 'center',
+    color: '#FFD700',
+    letterSpacing: 1.5,
     marginBottom: 12,
   },
-  body: {
-    fontSize: 14,
-    textAlign: 'center',
-    color: '#666',
-    marginBottom: 24,
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: COLORS.white,
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
-  button: {
-    backgroundColor: '#000000',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+  heroSubtitle: {
+    fontSize: 13,
+    color: '#888888',
+    lineHeight: 18,
   },
-  buttonText: {
-    color: '#ffef0a',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  input: {
+  appCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: '#E0E0E0',
+    padding: 24,
+  },
+  welcomeLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#888888',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  appTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.black,
+    marginBottom: 24,
+    letterSpacing: -0.5,
+  },
+  formContainer: {
+    marginBottom: 16,
+  },
+  fieldGroup: {
+    marginBottom: 16,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.black,
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D8D8D8',
+    backgroundColor: '#FAFAFA',
     borderRadius: 8,
-    marginBottom: 12,
-  },
-  oauthContainer: {
-    marginTop: 16,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  oauthButton: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 8,
+    paddingHorizontal: 14,
     paddingVertical: 12,
+    fontSize: 15,
+    color: COLORS.black,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.black,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginTop: 8,
   },
-  socialIcon: {
-    width: 18,
-    height: 18,
-    resizeMode: 'contain',
+  primaryButtonText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
-  oauthButtonGoogle: {
-    backgroundColor: '#ffffff',
-    borderColor: '#ffef0a',
-    borderWidth: 1,
+  disabledState: {
+    opacity: 0.5,
   },
-  oauthButtonFacebook: {
-    backgroundColor: '#ffffff',
-    borderColor: '#ffef0a',
-    borderWidth: 1,
-  },
-  oauthText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  oauthTextGoogle: {
-    color: '#000000',
-  },
-  oauthTextFacebook: {
-    color: '#000000',
-  },
-  link: {
-    marginTop: 12,
+  dividerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginVertical: 20,
   },
-  linkText: {
-    color: '#000000',
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  dividerText: {
+    fontSize: 11,
+    color: '#888888',
+    paddingHorizontal: 12,
     fontWeight: '600',
+    letterSpacing: 1,
+  },
+  secondaryButton: {
+    backgroundColor: COLORS.white,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D8D8D8',
+  },
+  googleDisabledState: {
+    backgroundColor: '#F4F4F4',
+    borderColor: '#E0E0E0',
+  },
+  secondaryButtonText: {
+    color: COLORS.black,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  configurationWarning: {
+    marginTop: 10,
+    fontSize: 11,
+    color: '#777',
+    textAlign: 'center',
+  },
+  navigationLink: {
+    marginTop: 20, // Snaps up neatly right beneath the social button
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  navigationLinkText: {
+    color: '#666',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  navigationLinkHighlight: {
+    color: COLORS.black,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });

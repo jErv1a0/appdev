@@ -34,6 +34,10 @@
    ```bash
    npx react-native run-android
    ```
+   If you are using the Android emulator instead of a phone, start the AVD first and then run:
+   ```bash
+   npm run android:emu
+   ```
 
 4. For iOS development:
    ```bash

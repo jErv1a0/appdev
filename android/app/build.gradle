@@ -1,7 +1,13 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
-apply plugin: "com.google.gms.google-services"
+
+
+// Set Metro dev server port for the Android build (development only).
+// Keep this aligned with the Metro server port used during local development.
+project.ext.react = [
+    devServerPort: 8081
+]
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -85,6 +91,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        // Allow cleartext traffic for local development (10.0.2.2 HTTP APIs)
+        manifestPlaceholders = [usesCleartextTraffic: "true"]
     }
     signingConfigs {
         debug {
@@ -93,28 +101,77 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file(STAYGRID_UPLOAD_STORE_FILE)
+            storePassword STAYGRID_UPLOAD_STORE_PASSWORD
+            keyAlias STAYGRID_UPLOAD_KEY_ALIAS
+            keyPassword STAYGRID_UPLOAD_KEY_PASSWORD
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
-            minifyEnabled enableProguardInReleaseBuilds
+            signingConfig signingConfigs.release
+            minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
+    }
+
+    packagingOptions {
+        // React Native and some library modules can contribute the same native libs.
+        // Pick the first copy so mergeDebugNativeLibs can complete without dropping
+        // required JNI artifacts.
+        pickFirsts += [
+                "**/libjsi.so",
+                "**/libc++_shared.so",
+                "**/libreactnativejni.so",
+                "**/libreact_featureflagsjni.so",
+                "**/libreact_devsupportjni.so",
+                "**/libreact_render*.so",
+                "**/libreact_performance_timeline.so"
+        ]
     }
 }
 
 dependencies {
-    // The version of react-native is set by the React Native Gradle Plugin
-    implementation("com.facebook.react:react-android")
+    implementation("com.facebook.react:react-android") {
+        exclude group: 'com.facebook', module: 'hermes-android'
+        exclude group: 'com.facebook', module: 'hermes-engine'
+    }
+    // Always include JSC as a fallback runtime to avoid Hermes executor crashes
+    implementation jscFlavor
+}
 
-    if (hermesEnabled.toBoolean()) {
-        implementation("com.facebook.react:hermes-android")
-    } else {
-        implementation jscFlavor
+apply plugin: "com.google.gms.google-services"
+
+// Prevent pulling in hermes-android transitively from other dependencies.
+// This ensures the app doesn't attempt to load libhermes_executor.so at runtime.
+configurations.all {
+    exclude group: 'com.facebook.react', module: 'hermes-android'
+    exclude group: 'com.facebook', module: 'hermes-android'
+    exclude group: 'com.facebook', module: 'hermes'
+    exclude group: 'com.facebook.fbjni', module: 'fbjni-java'
+    // Prevent accidental transitive pull-in of Facebook Android SDK.
+    exclude group: 'com.facebook.android'
+}
+
+def jsExecutorAbis = ["arm64-v8a", "armeabi-v7a", "x86", "x86_64"]
+
+tasks.matching { it.name == "mergeDebugNativeLibs" }.configureEach {
+    doLast {
+        def mergedLibDir = file("$buildDir/intermediates/merged_native_libs/debug/mergeDebugNativeLibs/out/lib")
+
+        jsExecutorAbis.each { abi ->
+            def sourceFile = file("$mergedLibDir/$abi/libjsctooling.so")
+            def targetFile = file("$mergedLibDir/$abi/libjscexecutor.so")
+
+            if (sourceFile.exists() && !targetFile.exists()) {
+                targetFile.parentFile.mkdirs()
+                targetFile.bytes = sourceFile.bytes
+            }
+        }
     }
 }
+

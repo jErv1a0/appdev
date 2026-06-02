@@ -6,6 +6,8 @@ export const LOGIN_REQUEST = 'auth/LOGIN_REQUEST';
 export const LOGIN_SUCCESS = 'auth/LOGIN_SUCCESS';
 export const LOGIN_FAILURE = 'auth/LOGIN_FAILURE';
 
+export const GOOGLE_LOGIN_REQUEST = 'auth/GOOGLE_LOGIN_REQUEST';
+
 export const REGISTER_REQUEST = 'auth/REGISTER_REQUEST';
 export const REGISTER_SUCCESS = 'auth/REGISTER_SUCCESS';
 export const REGISTER_FAILURE = 'auth/REGISTER_FAILURE';
@@ -60,7 +62,7 @@ interface LoginRequestAction {
 interface LoginSuccessAction {
   type: typeof LOGIN_SUCCESS;
   payload: {
-    token: string;
+    token: string | null;
     user: AuthUser | null;
   };
 }
@@ -68,6 +70,10 @@ interface LoginSuccessAction {
 interface LoginFailureAction {
   type: typeof LOGIN_FAILURE;
   payload: string;
+}
+
+interface GoogleLoginRequestAction {
+	type: typeof GOOGLE_LOGIN_REQUEST;
 }
 
 interface RegisterRequestAction {
@@ -107,6 +113,7 @@ export type AuthAction =
   | LoginRequestAction
   | LoginSuccessAction
   | LoginFailureAction
+  | GoogleLoginRequestAction
   | RegisterRequestAction
   | RegisterSuccessAction
   | RegisterFailureAction
@@ -140,12 +147,16 @@ export function loginRequest(email: string, password: string): LoginRequestActio
   return { type: LOGIN_REQUEST, payload: { email, password } };
 }
 
-export function loginSuccess(token: string, user: AuthUser | null): LoginSuccessAction {
+export function loginSuccess(token: string | null, user: AuthUser | null): LoginSuccessAction {
   return { type: LOGIN_SUCCESS, payload: { token, user } };
 }
 
 export function loginFailure(payload: string): LoginFailureAction {
   return { type: LOGIN_FAILURE, payload };
+}
+
+export function googleLoginRequest(): GoogleLoginRequestAction {
+	return { type: GOOGLE_LOGIN_REQUEST };
 }
 
 export function registerRequest(
@@ -183,6 +194,7 @@ export default function authReducer(
   switch (action.type) {
     case INIT_AUTH_REQUEST:
     case LOGIN_REQUEST:
+    case GOOGLE_LOGIN_REQUEST:
     case REGISTER_REQUEST:
     case LOGOUT_REQUEST:
       return {
@@ -198,7 +210,7 @@ export default function authReducer(
         initialized: true,
         token: action.payload.token,
         user: action.payload.user,
-        isAuthenticated: Boolean(action.payload.token),
+        isAuthenticated: Boolean(action.payload.token || action.payload.user),
       };
     case INIT_AUTH_FAILURE:
       return {
@@ -214,7 +226,7 @@ export default function authReducer(
         initialized: true,
         token: action.payload.token,
         user: action.payload.user,
-        isAuthenticated: true,
+        isAuthenticated: Boolean(action.payload.token || action.payload.user),
       };
     case LOGIN_FAILURE:
       return {

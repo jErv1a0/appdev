@@ -96,9 +96,31 @@ To learn more about React Native, take a look at the following resources:
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
 
-# Firebase Setup
+# Firebase Support (Optional)
 
-Firebase SDK is already installed and bootstrapped at app startup.
+This repo is set up for Google OAuth sign-in without requiring Firebase Authentication.
+
+The current auth flow is:
+
+React Native
+↓
+Google Sign-In
+↓
+Google ID Token
+↓
+Symfony API
+↓
+Verify token with Google
+↓
+Create/update user
+↓
+Issue your own JWT/API token
+↓
+Authenticated API requests
+
+Firebase Auth is only necessary if you want Firebase to manage user sessions and identity. If your Symfony backend already issues JWTs and manages users, skip Firebase Auth and keep your existing backend auth flow.
+
+If you still want Firebase services configured:
 
 1. Open [SRC/config/firebaseConfig.ts](SRC/config/firebaseConfig.ts)
 2. Replace every REPLACE_WITH_FIREBASE_* value with your Firebase project config
@@ -108,3 +130,4 @@ Notes:
 - Firebase services are initialized in [SRC/config/firebase.ts](SRC/config/firebase.ts)
 - Entry-point bootstrap is loaded from [index.js](index.js)
 - `measurementId` is optional for React Native and is not required for Firebase readiness
+- For Google OAuth without Firebase Auth, send the Google ID token to Symfony and verify it server-side before issuing a JWT

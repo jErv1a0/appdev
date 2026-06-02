@@ -1,3 +1,4 @@
+// Firebase is optional for this project. Google OAuth sign-in is handled by `@react-native-google-signin/google-signin` and your Symfony backend.
 import { type FirebaseOptions } from 'firebase/app';
 import {
   FIREBASE_API_KEY,
@@ -7,7 +8,7 @@ import {
   FIREBASE_MEASUREMENT_ID,
   FIREBASE_PROJECT_ID,
   FIREBASE_STORAGE_BUCKET,
-} from '@env';
+} from './envValues';
 
 function readValue(value?: string) {
   return value?.trim() ?? '';

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "114511547308",
+    "project_id": "staygrid-cdf0d",
+    "storage_bucket": "staygrid-cdf0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:114511547308:android:92ac1e6fa32f929ce84809",
+        "android_client_info": {
+          "package_name": "com.staygrid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAREpWuL_EcfurP5tG3TRdaderB_bgAb0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

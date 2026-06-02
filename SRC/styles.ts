@@ -45,5 +45,6 @@ export default StyleSheet.create({
   buttonText: {
     fontWeight: 'bold',
     color: COLORS.black,
+    textAlign: 'center',
   },
 });

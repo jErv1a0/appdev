@@ -8,6 +8,7 @@ declare module '@env' {
   export const DEFAULT_URI: string | undefined;
   export const APP_URL: string | undefined;
   export const APP_PORT: string | undefined;
+  export const GOOGLE_CLIENT_ID: string | undefined;
 
   export const FIREBASE_API_KEY: string | undefined;
   export const FIREBASE_AUTH_DOMAIN: string | undefined;

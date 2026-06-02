@@ -1,4 +1,10 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "disabled",
+    "terminal.integrated.env.windows": {
+        "ANDROID_HOME": "C:\\Users\\Jerv\\AppData\\Local\\Android\\Sdk",
+        "ANDROID_SDK_ROOT": "C:\\Users\\Jerv\\AppData\\Local\\Android\\Sdk",
+        "PATH": "${env:PATH};C:\\Users\\Jerv\\AppData\\Local\\Android\\Sdk\\platform-tools;C:\\Users\\Jerv\\AppData\\Local\\Android\\Sdk\\emulator"
+    },
+    "cmake.sourceDirectory": "C:/Users/Jerv/StayGrid/node_modules/react-native-reanimated/android"
 }
